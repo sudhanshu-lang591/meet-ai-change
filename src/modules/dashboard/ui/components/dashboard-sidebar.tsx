@@ -26,8 +26,8 @@ import{
 const firstSection = [
 {
     icon: VideoIcon,
-    label: "Meetings",
-    href: "/Meetings",
+    label: "Live Calls",
+    href: "/meetings",
 },
 {
     icon: BotIcon,

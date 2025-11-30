@@ -1,6 +1,5 @@
 import { nanoid } from "nanoid";
 import { pgTable, text, timestamp, boolean } from "drizzle-orm/pg-core";
-import { name } from "drizzle-orm";
 
 
 export const user = pgTable("user", {

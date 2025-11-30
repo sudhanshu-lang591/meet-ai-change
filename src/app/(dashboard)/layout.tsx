@@ -1,7 +1,6 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { DashboardNavbar } from "@/modules/dashboard/ui/components/dashboard-navbar";
 import { DashboadSidebar } from "@/modules/dashboard/ui/components/dashboard-sidebar";
-import { Sidebar } from "lucide-react";
 
 interface Props {
     children: React.ReactNode;

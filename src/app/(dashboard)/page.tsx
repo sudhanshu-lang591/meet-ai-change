@@ -13,11 +13,8 @@ const Page = async () => {
     redirect("/sign-in");
   }
 
-  return <HomeView />
-    
-
-
-}
+  return <HomeView />;
+};
 
 export default Page;
   
