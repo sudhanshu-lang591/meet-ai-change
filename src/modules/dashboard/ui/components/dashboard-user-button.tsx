@@ -1,7 +1,7 @@
 "use client";
 
 import { GeneratedAvatar } from "@/components/generated-avatar";
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +33,9 @@ export const DashboardUserButton = () => {
   const avatar = data?.user?.image ? (
     <Avatar>
       <AvatarImage src={data.user.image} />
+      <AvatarFallback className="text-xs font-semibold uppercase">
+        {data.user.name?.slice(0, 2) ?? "ME"}
+      </AvatarFallback>
     </Avatar>
   ) : (
     <GeneratedAvatar seed={data?.user?.name ?? "user"} variant="initials" className="size-9" />
@@ -69,11 +72,11 @@ export const DashboardUserButton = () => {
             <DrawerDescription>{data.user.email}</DrawerDescription>
           </DrawerHeader>
           <DrawerFooter>
-            <Button variant="outline" onClick={() => {}}>
+            <Button type="button" variant="outline" onClick={() => {}}>
               <CreditCardIcon className="size-4 text-black" />
               Billing
             </Button>
-            <Button variant="outline" onClick={onLogout}>
+            <Button type="button" variant="outline" onClick={onLogout}>
               <LogOutIcon className="size-4 text-black" />
               Logout
             </Button>
