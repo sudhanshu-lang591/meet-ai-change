@@ -7,7 +7,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 
 import { ErrorState } from "@/components/error-state";
-
 import { GeneratedAvatar } from "@/components/generated-avatar";
 import { LoadingState } from "@/components/loading-state";
 import { Badge } from "@/components/ui/badge";
@@ -15,14 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTRPC } from "@/trpc/client";
 import { AgentsListHeader } from "../components/agents-list-header";
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { GeneratedAvatar } from "@/components/generated-avatar";
-import { Button } from "@/components/ui/button";
-import { useState } from "react";
 import { NewAgentDialog } from "../components/new-agent-dialog";
-
 
 export const AgentsView = () => {
   const trpc = useTRPC();
@@ -65,32 +57,17 @@ export const AgentsView = () => {
       <div className="space-y-6 px-4 pb-8 md:px-8">
         <AgentsListHeader onNewAgent={() => handleDialogChange(true)} />
 
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const { data } = useSuspenseQuery(trpc.agents.getMany.queryOptions());
-
-  return (
-    <>
-      <NewAgentDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
-      <div className="px-4 pb-8 md:px-8">
-
         {data.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed bg-background py-16">
             <GeneratedAvatar seed="empty-state" variant="botttsNeutral" className="size-16" />
             <div className="space-y-1 text-center">
               <h3 className="text-lg font-semibold">No agents yet</h3>
               <p className="max-w-md text-sm text-muted-foreground">
-
                 Create your first AI assistant by defining its name and instructions. Meet.AI will use OpenAI to bring it to life
                 across chats and live calls.
               </p>
             </div>
             <Button onClick={() => handleDialogChange(true)}>Create an agent</Button>
-
-                Create your first AI assistant by defining its name and instructions. Meet.AI will use OpenAI to bring it to life.
-              </p>
-            </div>
-            <Button onClick={() => setIsDialogOpen(true)}>Create an agent</Button>
-
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-3">
@@ -122,10 +99,6 @@ export const AgentsView = () => {
                     <Button asChild size="sm" variant="secondary">
                       <Link href={`/agents?agent=${agent.id}`}>Edit agent</Link>
                     </Button>
-
-                  <div className="text-xs text-muted-foreground">
-                    Created on {agent.createdAt ? new Date(agent.createdAt).toLocaleDateString() : "Just now"}
-
                   </div>
                 </CardContent>
               </Card>

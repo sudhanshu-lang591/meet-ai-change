@@ -1,25 +1,20 @@
 "use client";
 
-
-import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-
-import { z } from "zod";
-import  Link from "next/link";
-import Image from "next/image";
-
-import { useState } from "react";
-import { FaGithub, FaGoogle } from "react-icons/fa";
-import { z } from "zod";
+import { useEffect } from "react";
+import { useFormState } from "react-dom";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { OctagonAlertIcon } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import Image from "next/image";
 import { useForm } from "react-hook-form";
+import { FaGithub } from "react-icons/fa";
 
-import { Alert, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { SocialLogin } from "@/modules/auth/ui/components/social-login";
+import { z } from "zod";
+
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -29,94 +24,67 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { authClient } from "@/lib/auth-client";
+import { Separator } from "@/components/ui/separator";
+import { signUpAction } from "../actions/signup-action";
+import { signUpSchema } from "../schemas";
 
-const formSchema = z
-  .object({
-    name: z.string().min(1, { message: "Name is required" }),
-    email: z.string().email(),
-    password: z.string().min(1, { message: "Password is required" }),
-    confirmPassword: z.string().min(1, { message: "Password is required" }),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"],
-  });
+const getDefaultValues = () => ({
+  email: "demo@meet.ai",
+  password: "password123",
+  name: "Demo User",
+  code: "123456",
+});
 
 export const SignUpView = () => {
-  const router = useRouter();
-
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-    },
+  const [state, formAction] = useFormState(signUpAction, {
+    success: false,
+    error: null,
+    invalidFields: [],
   });
 
-  const onSubmit = (data: z.infer<typeof formSchema>) => {
-    setError(null);
-    setPending(true);
+  const form = useForm<z.infer<typeof signUpSchema>>({
+    resolver: zodResolver(signUpSchema),
+    defaultValues: getDefaultValues(),
+  });
 
-    authClient.signUp.email(
-      {
-        name: data.name,
-        email: data.email,
-        password: data.password,
-        callbackURL: "/",
-      },
-      {
-        onSuccess: () => {
-          setPending(false);
-          router.push("/");
-        },
-        onError: ({ error: signUpError }) => {
-          setPending(false);
-          setError(signUpError.message);
-        },
-      },
-    );
+  useEffect(() => {
+    if (state.error) {
+      const emailOrPasswordError = state.invalidFields.includes("email") || state.invalidFields.includes("password");
+      const codeError = state.invalidFields.includes("code");
+
+      if (emailOrPasswordError && !codeError) {
+        form.setValue("password", "");
+      }
+    }
+  }, [form, state.error, state.invalidFields]);
+
+  const onSubmit = async (values: z.infer<typeof signUpSchema>) => {
+    formAction(values);
   };
 
-  const onSocial = (provider: "github" | "google") => {
-    setError(null);
-    setPending(true);
+  const pending = form.formState.isSubmitting || state.invalidFields.includes("pending");
 
-    authClient.signIn.social(
-      {
-        provider,
-        callbackURL: "/",
-      },
-      {
-        onSuccess: () => {
-          setPending(false);
-        },
-        onError: ({ error: socialError }) => {
-          setPending(false);
-          setError(socialError.message);
-        },
-      },
-    );
+  const onSocial = async (provider: "google" | "github") => {
+    const response = await SocialLogin(provider);
+
+    if (response?.url) {
+      window.location.href = response.url;
+    }
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <Card className="overflow-hidden p-0">
-        <CardContent className="grid p-0 md:grid-cols-2">
+    <div className="grid min-h-svh grid-cols-1 gap-y-8 px-4 py-10 md:grid-cols-[1.2fr_1fr] md:px-0">
+      <Card className="mx-auto w-full max-w-xl border-none shadow-none md:mx-0">
+        <CardContent className="p-0 md:p-8">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="p-6 md:p-8">
-              <div className="flex flex-col gap-6">
-                <div className="flex flex-col items-center text-center">
-                  <h1 className="text-2xl font-bold">Let&apos;s get started</h1>
-                  <p className="text-balance text-muted-foreground">Create your account</p>
-                </div>
+            <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
+              <div className="space-y-2 text-center md:text-left">
+                <h1 className="text-2xl font-semibold">Create an account</h1>
+                <p className="text-sm text-muted-foreground">Enter your details to get started</p>
+              </div>
 
-                <div className="grid gap-3">
+              <div className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
                   <FormField
                     control={form.control}
                     name="name"
@@ -124,15 +92,13 @@ export const SignUpView = () => {
                       <FormItem>
                         <FormLabel>Name</FormLabel>
                         <FormControl>
-                          <Input type="text" placeholder="John Doe" {...field} />
+                          <Input placeholder="Enter your full name" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                </div>
 
-                <div className="grid gap-3">
                   <FormField
                     control={form.control}
                     name="email"
@@ -140,7 +106,7 @@ export const SignUpView = () => {
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input type="email" placeholder="m@example.com" {...field} />
+                          <Input placeholder="email@example.com" type="email" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -148,79 +114,70 @@ export const SignUpView = () => {
                   />
                 </div>
 
-                <div className="grid gap-3">
-                  <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="**********" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Password</FormLabel>
+                      <FormControl>
+                        <Input placeholder="••••••••" type="password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                <div className="grid gap-3">
-                  <FormField
-                    control={form.control}
-                    name="confirmPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Confirm Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="**********" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                <FormField
+                  control={form.control}
+                  name="code"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>2FA Code</FormLabel>
+                      <FormControl>
+                        <Input placeholder="123456" maxLength={6} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                {!!error && (
-                  <Alert className="border-none bg-destructive/10">
-                    <OctagonAlertIcon className="h-4 w-4 !text-destructive" />
-                    <AlertTitle>{error}</AlertTitle>
-                  </Alert>
-                )}
+                <Separator className="my-2" />
 
-                <Button disabled={pending} type="submit" className="w-full">
-                  Sign up
-                </Button>
-
-                <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
-                  <span className="bg-card text-muted-foreground relative z-10 px-2">or continue with</span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <Button
-                    disabled={pending}
-                    onClick={() => onSocial("google")}
-                    variant="outline"
-                    type="button"
-                    className="w-full"
-                  >
-                    <FaGoogle />
+                <div className="flex flex-col gap-3">
+                  <Button type="submit" className="w-full" disabled={pending}>
+                    {pending ? (
+                      <Loader2 className="mr-2 size-4 animate-spin" aria-hidden />
+                    ) : null}
+                    Create account
                   </Button>
-                  <Button
-                    disabled={pending}
-                    onClick={() => onSocial("github")}
-                    variant="outline"
-                    type="button"
-                    className="w-full"
-                  >
-                    <FaGithub />
-                  </Button>
-                </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button
+                      disabled={pending}
+                      onClick={() => onSocial("google")}
+                      variant="outline"
+                      type="button"
+                      className="w-full"
+                    >
+                      <Image src="/google.svg" width={16} height={16} alt="Google logo" aria-hidden />
+                    </Button>
+                    <Button
+                      disabled={pending}
+                      onClick={() => onSocial("github")}
+                      variant="outline"
+                      type="button"
+                      className="w-full"
+                    >
+                      <FaGithub />
+                    </Button>
+                  </div>
 
-                <div className="text-center text-sm">
-                  Already have an account?{" "}
-                  <Link href="/sign-in" className="underline underline-offset-4">
-                    Sign in
-                  </Link>
+                  <div className="text-center text-sm">
+                    Already have an account?{" "}
+                    <Link href="/sign-in" className="underline underline-offset-4">
+                      Sign in
+                    </Link>
+                  </div>
                 </div>
               </div>
             </form>
@@ -238,22 +195,4 @@ export const SignUpView = () => {
       </div>
     </div>
   );
-        </Form>
-
-            <div className="bg-radial from-sidebar-accent to-sidebar relative hidden md:flex flex-col gap-y-4 items-center justify-center">
-                <Image src="/logo.svg" alt="Meet.AI logo" height={92} width={92} />
-                <p className="text-2xl font-semibold text-white">
-                  Meet.AI
-                </p>
-            </div>
-            </CardContent>
-        </Card>
-
-            <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4 ">
-                By clicking continue, you agree to our <a href="#">Terms of service</a> and <a href="#">Privacy Policy</a>
-            </div>
-        </div>
-    );
 };
-
- 
