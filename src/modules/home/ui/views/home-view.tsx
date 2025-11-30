@@ -4,7 +4,11 @@ import Link from "next/link";
 
 export const HomeView = () => {
   return (
+
     <section className="space-y-10 px-4 py-10 md:px-10 md:py-16">
+
+    <section className="px-4 md:px-10 py-10 md:py-16 space-y-10">
+
       <div className="max-w-3xl space-y-4">
         <p className="text-sm font-semibold text-primary">Meet.AI SaaS</p>
         <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
@@ -12,6 +16,7 @@ export const HomeView = () => {
         </h1>
         <p className="text-lg text-muted-foreground">
           Create reusable AI teammates that follow your instructions, join meetings, and deliver outcomes.
+
           Build once and let Meet.AI handle the heavy lifting across your team, from async workflows to live video co-pilots.
         </p>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -25,6 +30,10 @@ export const HomeView = () => {
             See a live call demo →
           </Link>
         </div>
+
+          Build once and let Meet.AI handle the heavy lifting across your team.
+        </p>
+
       </div>
 
       <div className="grid md:grid-cols-3 gap-4">
@@ -40,6 +49,7 @@ export const HomeView = () => {
           </div>
         ))}
       </div>
+
 
       <div className="grid gap-6 rounded-2xl border bg-card p-6 shadow-sm md:grid-cols-2">
         <div className="space-y-3">
@@ -84,6 +94,8 @@ export const HomeView = () => {
           </div>
         </div>
       </div>
+
+
     </section>
   );
 };

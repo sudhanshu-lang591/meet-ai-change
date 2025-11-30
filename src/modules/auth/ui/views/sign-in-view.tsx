@@ -1,7 +1,16 @@
 "use client";
 
+
 import Image from "next/image";
 import Link from "next/link";
+
+import { z } from "zod";
+import  Link from "next/link";
+import Image from "next/image";
+import { useState } from "react";
+import { OctagonAlertIcon } from "lucide-react";
+import { useForm } from "react-hook-form";
+
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { FaGithub, FaGoogle } from "react-icons/fa";
@@ -176,6 +185,7 @@ export const SignInView = () => {
                 </div>
               </div>
             </form>
+
           </Form>
 
           <div className="bg-radial from-sidebar-accent to-sidebar relative hidden items-center justify-center gap-y-4 md:flex md:flex-col">
@@ -190,6 +200,23 @@ export const SignInView = () => {
       </div>
     </div>
   );
+
+        </Form>
+
+            <div className="bg-radial from-sidebar-accent to-sidebar relative hidden md:flex flex-col gap-y-4 items-center justify-center">
+                <Image src="/logo.svg" alt="Meet.AI logo" height={92} width={92} />
+                <p className="text-2xl font-semibold text-white">
+                  Meet.AI
+                </p>
+            </div>
+            </CardContent>
+        </Card>
+
+            <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4 ">
+                By clicking continue, you agree to our <a href="#">Terms of service</a> and <a href="#">Privacy Policy</a>
+            </div>
+        </div>
+    );
 };
 
  
