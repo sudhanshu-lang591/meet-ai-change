@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 
 import { useSuspenseQuery } from "@tanstack/react-query";
 
@@ -18,14 +19,43 @@ import { NewAgentDialog } from "../components/new-agent-dialog";
 
 export const AgentsView = () => {
   const trpc = useTRPC();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { data } = useSuspenseQuery(trpc.agents.getMany.queryOptions());
 
+  const currentSearchParams = useMemo(
+    () => new URLSearchParams(searchParams?.toString()),
+    [searchParams],
+  );
+
+  useEffect(() => {
+    if (searchParams?.get("new") === "true") {
+      setIsDialogOpen(true);
+    }
+  }, [searchParams]);
+
+  const handleDialogChange = (open: boolean) => {
+    setIsDialogOpen(open);
+
+    const nextParams = new URLSearchParams(currentSearchParams.toString());
+
+    if (open) {
+      nextParams.set("new", "true");
+    } else {
+      nextParams.delete("new");
+    }
+
+    const query = nextParams.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname);
+  };
+
   return (
     <>
-      <NewAgentDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
+      <NewAgentDialog open={isDialogOpen} onOpenChange={handleDialogChange} />
       <div className="space-y-6 px-4 pb-8 md:px-8">
-        <AgentsListHeader onNewAgent={() => setIsDialogOpen(true)} />
+        <AgentsListHeader onNewAgent={() => handleDialogChange(true)} />
         {data.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed bg-background py-16">
             <GeneratedAvatar seed="empty-state" variant="botttsNeutral" className="size-16" />
@@ -36,7 +66,7 @@ export const AgentsView = () => {
                 across chats and live calls.
               </p>
             </div>
-            <Button onClick={() => setIsDialogOpen(true)}>Create an agent</Button>
+            <Button onClick={() => handleDialogChange(true)}>Create an agent</Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-3">
