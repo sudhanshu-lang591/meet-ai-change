@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTRPC } from "@/trpc/client";
+import { AgentsListHeader } from "../components/agents-list-header";
 import { NewAgentDialog } from "../components/new-agent-dialog";
 
 
@@ -23,7 +24,8 @@ export const AgentsView = () => {
   return (
     <>
       <NewAgentDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
-      <div className="px-4 pb-8 md:px-8">
+      <div className="space-y-6 px-4 pb-8 md:px-8">
+        <AgentsListHeader />
         {data.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed bg-background py-16">
             <GeneratedAvatar seed="empty-state" variant="botttsNeutral" className="size-16" />

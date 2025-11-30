@@ -35,7 +35,7 @@ export const DashboardUserButton = () => {
       <AvatarImage src={data.user.image} />
     </Avatar>
   ) : (
-    <GeneratedAvatar seed={data?.user?.name} variant="initials" className="size-9" />
+    <GeneratedAvatar seed={data?.user?.name ?? "user"} variant="initials" className="size-9" />
   );
 
   const onLogout = () => {

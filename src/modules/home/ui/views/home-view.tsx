@@ -2,7 +2,7 @@
 
 export const HomeView = () => {
   return (
-    <section className="px-4 md:px-10 py-10 md:py-16 space-y-10">
+    <section className="space-y-10 px-4 py-10 md:px-10 md:py-16">
       <div className="max-w-3xl space-y-4">
         <p className="text-sm font-semibold text-primary">Meet.AI SaaS</p>
         <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
@@ -12,6 +12,17 @@ export const HomeView = () => {
           Create reusable AI teammates that follow your instructions, join meetings, and deliver outcomes.
           Build once and let Meet.AI handle the heavy lifting across your team, from async workflows to live video co-pilots.
         </p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <a
+            className="inline-flex items-center justify-center rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
+            href="/sign-up"
+          >
+            Start for free
+          </a>
+          <a className="inline-flex items-center justify-center text-sm font-semibold text-primary" href="/meetings">
+            See a live call demo →
+          </a>
+        </div>
       </div>
 
       <div className="grid md:grid-cols-3 gap-4">
