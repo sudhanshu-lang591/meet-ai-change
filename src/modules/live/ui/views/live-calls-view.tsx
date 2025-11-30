@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { Clock3, Link2, RadioTower, Video } from "lucide-react";
 
 import { GeneratedAvatar } from "@/components/generated-avatar";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +25,8 @@ export const LiveCallsView = () => {
 
   const [selectedAgentId, setSelectedAgentId] = useState<string | undefined>(agents[0]?.id);
   const [isLive, setIsLive] = useState(false);
+  const [callStatus, setCallStatus] = useState<"idle" | "connecting" | "live">("idle");
+  const [callDuration, setCallDuration] = useState(0);
   const [transcript, setTranscript] = useState<TranscriptLine[]>([
     {
       speaker: "System",
@@ -37,25 +40,133 @@ export const LiveCallsView = () => {
     [agents, selectedAgentId],
   );
 
+  const agentSlug = useMemo(
+    () =>
+      activeAgent?.name
+        ? activeAgent.name
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/(^-|-$)/g, "")
+        : "agent",
+    [activeAgent],
+  );
+
+  const fallbackMeetingLink = useMemo(() => `https://stream.meet.ai/${agentSlug || "agent"}`, [agentSlug]);
+  const [meetingLink, setMeetingLink] = useState(fallbackMeetingLink);
+  const [isFetchingMeetingLink, setIsFetchingMeetingLink] = useState(false);
+
+  const formattedDuration = useMemo(() => {
+    const minutes = Math.floor(callDuration / 60)
+      .toString()
+      .padStart(2, "0");
+    const seconds = (callDuration % 60).toString().padStart(2, "0");
+
+    return `${minutes}:${seconds}`;
+  }, [callDuration]);
+
   const shortInstructions = useMemo(() => {
     if (!activeAgent?.instructions) return "OpenAI agent ready for live calls.";
     if (activeAgent.instructions.length < 140) return activeAgent.instructions;
     return `${activeAgent.instructions.slice(0, 137)}...`;
   }, [activeAgent]);
 
+  useEffect(() => {
+    setMeetingLink(fallbackMeetingLink);
+
+    const controller = new AbortController();
+
+    const fetchMeetingLink = async () => {
+      if (!activeAgent?.name) return;
+      setIsFetchingMeetingLink(true);
+
+      try {
+        const response = await fetch(
+          `/api/live/meeting-link?agent=${encodeURIComponent(activeAgent.name)}`,
+          { signal: controller.signal },
+        );
+
+        if (!response.ok) throw new Error("Unable to fetch meeting link");
+
+        const { meetingLink: fetchedLink } = (await response.json()) as { meetingLink?: string };
+        if (!controller.signal.aborted && fetchedLink) {
+          setMeetingLink(fetchedLink);
+        }
+      } catch {
+        if (!controller.signal.aborted) {
+          setMeetingLink(fallbackMeetingLink);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsFetchingMeetingLink(false);
+        }
+      }
+    };
+
+    void fetchMeetingLink();
+
+    return () => controller.abort();
+  }, [activeAgent?.name, fallbackMeetingLink]);
+
   const startCall = () => {
+    if (!activeAgent) return;
+
+    setCallDuration(0);
     setIsLive(true);
+    setCallStatus("connecting");
     setTranscript((previous) => [
       ...previous,
       {
         speaker: "System",
-        content: `${activeAgent?.name ?? "Agent"} joined with OpenAI-powered voice + video.`,
+        content: `${activeAgent.name} is joining with OpenAI-powered voice + video on Stream.`,
         tone: "system",
       },
       {
-        speaker: activeAgent?.name ?? "Agent",
+        speaker: activeAgent.name,
         content: "I'm live on camera and ready to assist. What would you like me to capture?",
         tone: "agent",
+      },
+      {
+        speaker: "System",
+        content: `Stream video bridge ready at ${meetingLink}. Captions and speaker tags are enabled for this session.`,
+        tone: "system",
+      },
+    ]);
+
+    window.setTimeout(() => {
+      setCallStatus("live");
+      setTranscript((previous) => [
+        ...previous,
+        {
+          speaker: "System",
+          content: `${activeAgent.name} is now live on video. Audio, captions, and action items will stream automatically.`,
+          tone: "system",
+        },
+      ]);
+    }, 800);
+  };
+
+  useEffect(() => {
+    if (callStatus !== "live") return;
+
+    const startedAt = Date.now();
+    const timer = window.setInterval(() => {
+      setCallDuration(Math.floor((Date.now() - startedAt) / 1000));
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [callStatus]);
+
+  const endCall = () => {
+    if (!activeAgent) return;
+    setIsLive(false);
+    setCallStatus("idle");
+    setCallDuration(0);
+    setTranscript((previous) => [
+      ...previous,
+      {
+        speaker: "System",
+        content: `${activeAgent.name} ended the live video session. A recap will be queued automatically.`,
+        tone: "system",
       },
     ]);
   };
@@ -73,6 +184,11 @@ export const LiveCallsView = () => {
         speaker: activeAgent.name,
         content: `Based on the live transcript, here are the next steps: summarize decisions, assign owners, and send a recap that matches the ${activeAgent.name} playbook.`,
         tone: "agent",
+      },
+      {
+        speaker: "System",
+        content: "Live summary delivered. The video agent will keep tracking follow-ups in real time.",
+        tone: "system",
       },
     ]);
   };
@@ -102,8 +218,8 @@ export const LiveCallsView = () => {
               <CardTitle className="text-xl font-semibold">Live call room</CardTitle>
               <p className="text-sm text-muted-foreground">Preview the on-camera experience for you and your agent.</p>
             </div>
-            <Badge variant={isLive ? "default" : "secondary"} className="capitalize">
-              {isLive ? "Live on video" : "Offline"}
+            <Badge variant={callStatus === "live" ? "default" : "secondary"} className="capitalize">
+              {callStatus === "live" ? "Live on video" : callStatus === "connecting" ? "Connecting" : "Offline"}
             </Badge>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -123,7 +239,11 @@ export const LiveCallsView = () => {
                     </div>
                     <div className="aspect-video w-full overflow-hidden rounded-lg bg-background shadow-inner">
                       <div className="flex h-full items-center justify-center bg-gradient-to-br from-background via-muted to-primary/5 text-xs font-medium text-muted-foreground">
-                        {isLive ? "Streaming video" : "Waiting for call to start"}
+                        {callStatus === "live"
+                          ? "Streaming video"
+                          : callStatus === "connecting"
+                            ? "Connecting camera and audio"
+                            : "Waiting for call to start"}
                       </div>
                     </div>
                     <p className="text-xs text-muted-foreground">
@@ -147,10 +267,17 @@ export const LiveCallsView = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <Button onClick={startCall} disabled={!activeAgent || isLive}>
-                    {isLive ? "Agent is live" : "Start live video"}
+                    {callStatus === "connecting"
+                      ? "Connecting..."
+                      : callStatus === "live"
+                        ? "Agent is live"
+                        : "Start live video"}
                   </Button>
                   <Button variant="outline" onClick={dropLiveInsight} disabled={!isLive}>
                     Drop OpenAI response
+                  </Button>
+                  <Button variant="ghost" onClick={endCall} disabled={!isLive}>
+                    End call
                   </Button>
                 </div>
               </div>
@@ -177,6 +304,40 @@ export const LiveCallsView = () => {
                 ))}
               </select>
               <p className="text-xs text-muted-foreground">Live calls inherit the agent instructions automatically.</p>
+            </div>
+            <Separator />
+            <div className="space-y-2">
+              <p className="text-sm font-semibold">Live video session</p>
+              <div className="space-y-3 rounded-lg border bg-background p-3 text-xs">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm font-semibold">
+                    <Video className="size-4 text-primary" />
+                    <span>{callStatus === "live" ? "On-camera with your agent" : "Ready for live video"}</span>
+                  </div>
+                  <Badge variant={callStatus === "live" ? "default" : "secondary"} className="capitalize">
+                    {callStatus === "live" ? "Live" : callStatus === "connecting" ? "Connecting" : "Offline"}
+                  </Badge>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 text-muted-foreground">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Link2 className="size-4" />
+                    <span className="truncate" title={meetingLink}>
+                      {isFetchingMeetingLink ? "Fetching meeting link..." : meetingLink}
+                    </span>
+                  </div>
+                  <Badge variant="outline" className="border-dashed">Stream video link</Badge>
+                </div>
+                <div className="flex flex-wrap gap-3 text-muted-foreground">
+                  <span className="flex items-center gap-2 rounded-md bg-muted px-2 py-1 text-[11px] font-medium">
+                    <RadioTower className="size-4 text-primary" />
+                    {callStatus === "live" ? "Streaming with live captions" : "Waiting to connect"}
+                  </span>
+                  <span className="flex items-center gap-2 rounded-md bg-muted px-2 py-1 text-[11px] font-medium">
+                    <Clock3 className="size-4 text-primary" />
+                    {callStatus === "live" ? `On call ${formattedDuration}` : "00:00"}
+                  </span>
+                </div>
+              </div>
             </div>
             <Separator />
             <div className="space-y-2">
