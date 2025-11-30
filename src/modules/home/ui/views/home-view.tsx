@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 export const HomeView = () => {
   return (
     <section className="space-y-10 px-4 py-10 md:px-10 md:py-16">
@@ -13,15 +15,15 @@ export const HomeView = () => {
           Build once and let Meet.AI handle the heavy lifting across your team, from async workflows to live video co-pilots.
         </p>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <a
+          <Link
             className="inline-flex items-center justify-center rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
             href="/sign-up"
           >
             Start for free
-          </a>
-          <a className="inline-flex items-center justify-center text-sm font-semibold text-primary" href="/meetings">
+          </Link>
+          <Link className="inline-flex items-center justify-center text-sm font-semibold text-primary" href="/meetings">
             See a live call demo →
-          </a>
+          </Link>
         </div>
       </div>
 
