@@ -3,19 +3,19 @@ import { DashboardNavbar } from "@/modules/dashboard/ui/components/dashboard-nav
 import { DashboadSidebar } from "@/modules/dashboard/ui/components/dashboard-sidebar";
 
 interface Props {
-    children: React.ReactNode;
+  children: React.ReactNode;
 }
 
 const Layout = ({ children }: Props) => {
-    return (
+  return (
     <SidebarProvider>
-        <DashboadSidebar />
-        <main className="flex flex-col h-screen w-screen bg-muted">
-        <DashboardNavbar/>
+      <DashboadSidebar />
+      <main className="flex h-screen w-screen flex-col bg-muted">
+        <DashboardNavbar />
         {children}
-        </main> 
+      </main>
     </SidebarProvider>
-    );
-}
+  );
+};
 
 export default Layout;
