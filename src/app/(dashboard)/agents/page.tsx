@@ -21,7 +21,6 @@ const Page = async () => {
 
   return (
     <>
-      <AgentsListHeader />
       <HydrationBoundary state={dehydrate(queryClient)}>
         <Suspense fallback={<AgentsViewLoading />}>
           <ErrorBoundary fallback={<AgentsViewError />}>
