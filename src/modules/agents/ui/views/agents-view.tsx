@@ -25,7 +25,7 @@ export const AgentsView = () => {
     <>
       <NewAgentDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
       <div className="space-y-6 px-4 pb-8 md:px-8">
-        <AgentsListHeader />
+        <AgentsListHeader onNewAgent={() => setIsDialogOpen(true)} />
         {data.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed bg-background py-16">
             <GeneratedAvatar seed="empty-state" variant="botttsNeutral" className="size-16" />
